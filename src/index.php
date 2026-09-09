@@ -1,0 +1,139 @@
+<?php
+// Minden dátumszámítás magyar idő szerint (a hét vasárnap éjfélkor vált Budapesten, nem UTC szerint).
+date_default_timezone_set('Europe/Budapest');
+
+$now = new DateTimeImmutable('now');
+
+// ISO-8601 hetsorszám (01-53).
+$week = (int) $now->format('W');
+
+// Magyar dátum, rendszer-locale és strftime() nélkül.
+// A strftime() 8.1 óta deprecated és PHP 9-ben megszűnt; a setlocale('hu_HU.UTF8')
+// pedig csendben false-t ad olyan gépen, ahol nincs telepítve a magyar locale,
+// és akkor a dátum nyom nélkül eltűnik az oldalról. Ezért fix szótár.
+$honapok = [
+    1 => 'január', 2 => 'február', 3 => 'március', 4 => 'április',
+    5 => 'május', 6 => 'június', 7 => 'július', 8 => 'augusztus',
+    9 => 'szeptember', 10 => 'október', 11 => 'november', 12 => 'december',
+];
+$napok = [
+    0 => 'vasárnap', 1 => 'hétfő', 2 => 'kedd', 3 => 'szerda',
+    4 => 'csütörtök', 5 => 'péntek', 6 => 'szombat',
+];
+
+$datum = sprintf(
+    '%s. %s %s., %s',
+    $now->format('Y'),
+    $honapok[(int) $now->format('n')],
+    $now->format('d'),
+    $napok[(int) $now->format('w')]
+);
+?>
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-NVTZ9KZ');</script>
+	<!-- End Google Tag Manager -->
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hányadik hét van?</title>
+    <link rel="canonical" href="https://hanyadikhetvan.hu/">
+    <meta property="og:title" content="Hányadik hét van?">
+    <meta property="og:description" content="Hányadik hét van?">
+    <meta property="og:image" content="https://hanyadikhetvan.hu/img/share.png">
+    <link rel="image_src" href="https://hanyadikhetvan.hu/img/share.png">
+    <meta name="keywords" content="hányadik hét van, hányadik hét, év hányadik hete, milyen hetet, hetek száma, hetek sorszáma, milyen hét van, páros hét, páratlan hét">
+    <meta name="description" content="Hányadik hét van? Kattints, és rögtön megtudod!">
+    <meta name="abstract" content="Hányadik hét van?">
+    <meta name="robots" content="all">
+    <meta name="googlebot" content="index, follow">
+    <meta name="revisit-after" content="0 days">
+    <link rel="profile" href="http://microformats.org/profile/hcalendar">
+    <link rel="shortcut icon" type="image/x-icon" href="img/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({
+    google_ad_client: "ca-pub-2290110987278274",
+    enable_page_level_ads: true
+        });
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z89C726HYQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-Z89C726HYQ');
+    </script>
+</head>
+
+<body>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NVTZ9KZ" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<div id="header">
+    <h1><span></span>Hányadik hét van?</h1>
+</div>
+<div id="content">
+    <dl class="vevent">
+        <dt class="summary">Az év hányadik hete van?</dt>
+        <dd>
+            <p class="description">
+                <span class="pl">Most a</span>
+                <span class="pc" id="hetszam"><?php echo $week; ?>.</span>
+                <span class="pr">hét van.</span>
+                <span class="px" id="parossag"><?php echo $week % 2 === 0 ? 'páros' : 'páratlan'; ?></span>
+            </p>
+            <div>
+                <p class="dtstart" id="datum" title="<?php echo $now->format('Ymd'); ?>">
+                    <small><?php echo $datum; ?></small>
+                </p>
+            </div>
+        </dd>
+    </dl>
+</div>
+
+<script>
+// Biztonsági háló: az oldal statikusan, naponta egyszer generálódik. Ha egy
+// generálás kimarad, a látogató akkor is a helyes hetet lássa. Mindig budapesti
+// idő szerint számol, akárhol is van a látogató.
+(function () {
+    try {
+        var ma = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Europe/Budapest',
+            year: 'numeric', month: '2-digit', day: '2-digit'
+        }).format(new Date()).split('-');
+
+        var d = new Date(Date.UTC(+ma[0], +ma[1] - 1, +ma[2]));
+        var nap = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - nap);
+        var evKezdet = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        var het = Math.ceil(((d - evKezdet) / 86400000 + 1) / 7);
+
+        var honapok = ['január','február','március','április','május','június',
+                       'július','augusztus','szeptember','október','november','december'];
+        var napok = ['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
+        var valos = new Date(Date.UTC(+ma[0], +ma[1] - 1, +ma[2]));
+
+        document.getElementById('hetszam').textContent = het + '.';
+        document.getElementById('parossag').textContent = het % 2 === 0 ? 'páros' : 'páratlan';
+        var datumElem = document.getElementById('datum');
+        datumElem.title = ma[0] + ma[1] + ma[2];
+        datumElem.getElementsByTagName('small')[0].textContent =
+            ma[0] + '. ' + honapok[+ma[1] - 1] + ' ' + ma[2] + '., ' + napok[valos.getUTCDay()];
+    } catch (e) {
+        /* Régi böngésző: marad a szerveren generált érték. */
+    }
+})();
+</script>
+</body>
+</html>

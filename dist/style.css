@@ -1,0 +1,118 @@
+a#generousdesigner.com{content:url(http://agenerousdesigner.com)}
+
+/* -------- RESET --------- */
+* {margin: 0; padding: 0;}
+
+/* -------- LAYOUT -------- */
+body {
+	background: #fff;
+	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-size: 62.5%; /* resets 1em to 10px */
+	line-height: 1.3;
+	color: #424141;
+}
+#wrapper {
+	position: relative;
+	margin: 0 auto;
+}
+#header {
+	position: relative;
+	padding-top: 20px;
+	height: 110px;
+	background: #e5e3df url(img/bg.png) 0 0 repeat-x;
+}
+#header h1 {
+	position: relative;
+	margin: 0 auto;
+	width: 570px;
+	height: 90px;
+	line-height: 90px;
+	font-size: 50px;
+	text-shadow: #fff 0 1px 0;
+}
+#header h1 span {
+	position: relative;
+	display: block;
+	float: left;
+	margin-right: 25px;
+	width: 90px;
+	height: 90px;
+	background: url(img/bg.png) 0 -130px no-repeat;
+}
+#content {
+	position: relative;
+	padding-top: 20px;
+}
+#content dt {
+	display: none;
+}
+#content dd .description {
+	position: relative;
+	margin: 0 auto 18px auto;
+	width: 770px;
+	height: 390px;
+}
+#content dd .description .pl {
+	position: absolute;
+	right: 560px;
+	top: 160px;
+	font-size: 36px;
+}
+#content dd .description .pc {
+	position: relative;
+	display: block;
+	margin: 0 auto;
+	padding-top: 145px;
+	width: 325px;
+	height: 245px;
+	text-align: center;
+	font-size: 180px;
+	font-weight: bold;
+	color: #f46d31;
+	line-height: 180px;
+	background: url(img/bg.png) 0 -221px no-repeat;
+}
+#content dd .description .px {
+	position: absolute;
+    bottom: 10px;
+    left: 310px;
+    text-align: center;
+    width: 150px;
+    font-weight: bold;
+    color: #fff;
+    font-size: 30px;
+}
+#content dd .description .pr {
+	position: absolute;
+	left: 560px;
+	bottom: 85px;
+	font-size: 36px;
+}
+#content dd div {
+	position: relative;
+	margin: 0 auto;
+	width: 325px;
+	height: 21px;
+}
+#content dd .dtstart {
+	position: relative;
+	float: right;
+	text-align: center;
+	color: #9f9f9f;
+	font-size: 14px;
+	line-height: 21px;
+	text-transform: lowercase;
+}
+.text {
+	margin: 0 auto 30px;
+	width: 570px;
+	font-size: 14px;
+}
+
+.info {
+	margin: 15px 0;
+	padding-left: 60px;
+	background: url(img/exclamation.png) 0 50% no-repeat;
+	background-size: 50px;
+	color: #f3612c;
+}
