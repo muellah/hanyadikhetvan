@@ -1,0 +1,53 @@
+# KÉSZENLÉTI ÜZEMMÓD — GitHub Pages tartalék a Netlify helyett.
+#
+# Ma NEM fut magától: csak kézzel indítható (Actions fül -> "GitHub Pages (tartalék)"
+# -> Run workflow). Így nem ütközik a Netlify-jal, és nem gyárt napi hibajelzést.
+#
+# Átálláskor (lásd docs/DNS-atallas.md "Váltás GitHub Pages-re"):
+#   1. Repo Settings -> Pages -> Source: GitHub Actions
+#   2. Az alábbi "schedule" blokkról vedd le a kommentet, hogy naponta frissüljön
+#   3. Futtasd le kézzel egyszer, aztán jöhet a DNS
+name: GitHub Pages (tartalék)
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '35 23 * * *'   # 5 perccel a Netlify-build után, hogy ne ütközzenek
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP telepítése
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Generálás
+        run: ./build.sh
+
+      - uses: actions/configure-pages@v5
+
+      - name: Feltöltés
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Közzététel
+        id: deployment
+        uses: actions/deploy-pages@v4
