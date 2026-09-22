@@ -10,6 +10,17 @@ kézzel újra létre nem hozod őket a Netlify DNS-ben.
 
 Marad tehát a DNS a DotRollnál, és csak **két rekord** változik.
 
+## FONTOS 2: az átállás után is kell a DotRoll-fiók
+
+Ez a terv **csak a webkiszolgálást** viszi át a Netlify-ra. A domain DNS-zónája és a
+levelezés (`mx.dotroll.com`) a DotRollnál marad. Tehát amikor lemondasz valamit, a
+**webtárhely-szolgáltatást** mondod le, nem a fiókot és nem a domaint.
+
+Mielőtt bármit lemondanál, kérdezd meg a DotRollt: **adnak-e DNS-kezelést és levelezést
+webtárhely-csomag nélkül?** Ha nem, akkor vagy marad egy minimális csomag, vagy a DNS-t és
+a levelezést is át kell vinni máshová, és az már egy külön, nagyobb lépés (az MX és a
+Google-verifikációs TXT rekordot is újra létre kellene hozni).
+
 ## Sorrend (ez a sorrend számít)
 
 ### 1. A domain hozzáadása a Netlify oldalán (ELŐSZÖR)
@@ -51,9 +62,21 @@ dig +short hanyadikhetvan.hu A            # 75.2.60.5 kell legyen
 dig +short hanyadikhetvan.hu MX           # tovabbra is 5 mx.dotroll.com
 curl -sI https://hanyadikhetvan.hu/ | head -3
 curl -s https://hanyadikhetvan.hu/ | grep -o 'id="hetszam">[0-9]*\.'
+curl -sI http://hanyadikhetvan.hu/ | head -3    # 301 kell https-re
 ```
+
+Az utolsó sor azért kell, mert a régi DotRoll-szerver átirányította a HTTP-t HTTPS-re, a
+Netlify oldalán viszont a "force HTTPS" jelenleg nincs bekapcsolva (tanúsítvány híján még
+nem is lehet). Ha a tanúsítvány elkészülte után ez a parancs nem 301-et ad, kapcsold be:
+Netlify → Domain management → HTTPS → Force HTTPS.
 
 ## Visszaút
 
-Ha bármi félremegy: a DotRoll DNS-ben az A rekordot vissza `134.209.91.8`-ra, a `www`
-CNAME-et vissza az eredetire. A régi PHP-oldal a DotRoll szerverén érintetlenül megvan.
+Ha bármi félremegy, a DotRoll DNS-ben állítsd vissza pontosan ezt a két értéket:
+
+| Típus | Név | Érték |
+|---|---|---|
+| A | `@` | `134.209.91.8` |
+| CNAME | `www` | `hanyadikhetvan.hu` |
+
+A régi PHP-oldal a DotRoll szerverén érintetlenül megvan, tehát a visszaállás azonnal él.
