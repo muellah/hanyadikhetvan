@@ -7,6 +7,11 @@ on:
   schedule:
     - cron: '1 22 * * 0'   # vasárnap 22:01 UTC = hétfő 00:01 Budapest (nyári idő, okt. 25-ig)
   workflow_dispatch:
+    inputs:
+      teszt_hiba:
+        description: 'Szándékos hiba a hibaág (issue, email) kipróbálásához'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -35,11 +40,16 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Teszt-hiba előkészítése (csak kézi teszt)
+        if: inputs.teszt_hiba == true
+        run: curl -s https://hanyadikhetvan.hu/ | sed 's/id="hetszam">[0-9]*\./id="hetszam">1./' > /tmp/rossz.html
+
       - name: Ellenőrzés
         id: hc
         if: steps.guard.outputs.skip == 'false'
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          HC_HTML: ${{ inputs.teszt_hiba == true && '/tmp/rossz.html' || '' }}
         run: |
           set -o pipefail
           node scripts/healthcheck.mjs | tee report.md
@@ -54,7 +64,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh issue create --repo "${{ github.repository }}" \
-            --title "Heti ellenőrzés: HIBA ($(TZ=Europe/Budapest date +%F))" \
+            --title "Heti ellenőrzés: HIBA ($(TZ=Europe/Budapest date +%F))${{ inputs.teszt_hiba == true && ' [TESZT]' || '' }}" \
             --body-file report.md
 
       - name: Kikapcsolás az utolsó ütemezett futás után
