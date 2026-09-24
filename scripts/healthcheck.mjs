@@ -126,7 +126,7 @@ async function main() {
   // 7. Az automatizmus: lefutottak-e a napi workflow-k
   for (const wf of ['pages.yml', 'build.yml']) {
     try {
-      const j = await (await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${wf}/runs?per_page=1&status=completed`, { headers: { accept: 'application/vnd.github+json' } })).json();
+      const j = await (await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${wf}/runs?per_page=1&status=completed`, { headers: { accept: 'application/vnd.github+json', ...(process.env.GITHUB_TOKEN ? { authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}) } })).json();
       const run = (j.workflow_runs || [])[0];
       const hours = run ? (NOW - new Date(run.created_at)) / 3600000 : Infinity;
       check(`Automatizmus: ${wf} legutóbbi futása sikeres és 30 órán belüli`, run && run.conclusion === 'success' && hours <= 30,

@@ -1,0 +1,64 @@
+# Élesüzem-ellenőrzés a GitHub Pages-re átállás után, 3 hétfőn át (2026-09-28, 10-05, 10-12).
+# Az utolsó futás után magát kikapcsolja. Kézzel bármikor indítható.
+# Hiba esetén: a workflow piros lesz (a GitHub emailt küld), és nyit egy issue-t a teljes jelentéssel.
+name: Heti élesüzem-ellenőrzés
+
+on:
+  schedule:
+    - cron: '1 22 * * 0'   # vasárnap 22:01 UTC = hétfő 00:01 Budapest (nyári idő, okt. 25-ig)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Időszak-őr (csak 2026-10-12-ig)
+        id: guard
+        run: |
+          d=$(TZ=Europe/Budapest date +%Y%m%d)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$d" -gt 20261012 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "Az ellenőrzési időszak lejárt ($d)."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip == 'false'
+
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.skip == 'false'
+        with:
+          node-version: '22'
+
+      - name: Ellenőrzés
+        id: hc
+        if: steps.guard.outputs.skip == 'false'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          node scripts/healthcheck.mjs | tee report.md
+          
+      - name: Jelentés a futás összefoglalójába
+        if: always() && steps.guard.outputs.skip == 'false'
+        run: cat report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "nincs jelentés" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Issue nyitása hiba esetén
+        if: failure() && steps.hc.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue create --repo "${{ github.repository }}" --title "Heti ellenőrzés: HIBA ($(TZ=Europe/Budapest date +%F))" --body-file report.md
+
+      - name: Kikapcsolás az utolsó ütemezett futás után
+        if: always() && github.event_name == 'schedule' && steps.guard.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(TZ=Europe/Budapest date +%Y%m%d)" -ge 20261012 ]; then
+            gh workflow disable healthcheck.yml --repo "${{ github.repository }}" && echo "Utolsó futás, a workflow kikapcsolva."
+          fi
