@@ -24,11 +24,17 @@ név `hanyadikhetvan.hu`, TTL 10 perc):
 Egy rekorddal is működik; a `www` már most mind a négy címet megkapja a
 `muellah.github.io`-n keresztül.
 
-## A DotRoll-fiókot ne mondd fel
+## Mi hol van
 
-A DNS-zóna és a levelezés ott van. Ha valaha le akarod mondani, előbb kérdezd meg, adnak-e
-DNS-kezelést és levelezést tárhelycsomag nélkül, vagy vidd át mindkettőt máshová (az MX-et
-és a TXT-t is újra létre kell hozni).
+| | Szolgáltató | Teendő |
+|---|---|---|
+| Domain-regisztráció, DNS, levélátirányítás | **DotRoll** | Marad. Tárhelyszolgáltatás itt nincs (az ügyfélközpont szerint 0 szolgáltatás), csak a domainek. |
+| Az oldal kiszolgálása | **GitHub Pages** | Ingyenes, automatikus. |
+| A régi oldal szervere | **DigitalOcean**, `134.209.91.8` (nginx) | Leállítható: 2026-09-24-én ellenőrizve, a hat DotRoll-domain közül egyik sem mutat már rá, és egyik levelezés sem függ tőle. |
+| Tartalék | **Netlify**, `hanyadikhetvan` projekt | Automatikus build kikapcsolva, nem fogyaszt. |
+
+**A domain automatikus megújítása ki van kapcsolva a DotRollnál**, lejárat: 2027-07-02. Ha nincs
+bekapcsolva, a lejárat előtt kézzel kell megújítani, különben a domain elveszhet.
 
 ## Hogyan frissül az oldal
 
