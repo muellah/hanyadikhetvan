@@ -43,7 +43,7 @@ jobs:
         run: |
           set -o pipefail
           node scripts/healthcheck.mjs | tee report.md
-          
+
       - name: Jelentés a futás összefoglalójába
         if: always() && steps.guard.outputs.skip == 'false'
         run: cat report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "nincs jelentés" >> "$GITHUB_STEP_SUMMARY"
@@ -52,7 +52,10 @@ jobs:
         if: failure() && steps.hc.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh issue create --repo "${{ github.repository }}" --title "Heti ellenőrzés: HIBA ($(TZ=Europe/Budapest date +%F))" --body-file report.md
+        run: |
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Heti ellenőrzés: HIBA ($(TZ=Europe/Budapest date +%F))" \
+            --body-file report.md
 
       - name: Kikapcsolás az utolsó ütemezett futás után
         if: always() && github.event_name == 'schedule' && steps.guard.outputs.skip == 'false'
