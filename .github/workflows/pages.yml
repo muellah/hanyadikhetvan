@@ -1,18 +1,18 @@
-# KÉSZENLÉTI ÜZEMMÓD — GitHub Pages tartalék a Netlify helyett.
+# ÉLES: 2026-09-24 óta ez szolgálja ki a hanyadikhetvan.hu-t (GitHub Pages).
 #
-# Ma NEM fut magától: csak kézzel indítható (Actions fül -> "GitHub Pages (tartalék)"
-# -> Run workflow). Így nem ütközik a Netlify-jal, és nem gyárt napi hibajelzést.
+# Naponta fut, és kézzel is indítható (Actions fül -> "GitHub Pages" -> Run workflow).
+# A build.yml továbbra is commitolja a dist/ mappát: ez tartja aktívnak a repót (a GitHub
+# 60 nap inaktivitás után letiltja az ütemezett workflow-kat), és tartalékként megőrzi a
+# kész oldalt. A Netlify automatikus buildje ki van kapcsolva (stop_builds), így az a
+# commit már nem fogyaszt Netlify-kreditet.
 #
-# Átálláskor (lásd docs/DNS-atallas.md "Váltás GitHub Pages-re"):
-#   1. Repo Settings -> Pages -> Source: GitHub Actions
-#   2. Az alábbi "schedule" blokkról vedd le a kommentet, hogy naponta frissüljön
-#   3. Futtasd le kézzel egyszer, aztán jöhet a DNS
-name: GitHub Pages (tartalék)
+# Visszaút a Netlify-ra: lásd docs/DNS-atallas.md.
+name: GitHub Pages
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '35 23 * * *'   # 5 perccel a Netlify-build után, hogy ne ütközzenek
+  schedule:
+    - cron: '35 23 * * *'   # 00:35 / 01:35 budapesti idő, 5 perccel a dist-commit után
 
 permissions:
   contents: read

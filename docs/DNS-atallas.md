@@ -1,138 +1,68 @@
-# DNS-átállás: hanyadikhetvan.hu a Netlify-ra
+# hanyadikhetvan.hu: hosting és DNS
 
-Állapot 2026-09-22. Az éles oldal még a DotRollon fut, ez a leírás az átállás lépéseit rögzíti.
+Állapot 2026-09-24: az oldalt a **GitHub Pages** szolgálja ki. A DNS és a levelezés a
+DotRollnál van.
 
-## FONTOS: ne a névszervereket állítsd át
+## Jelenlegi DNS (DotRoll)
 
-A levelezésed a `mx.dotroll.com` MX rekordon megy. Ha a névszervereket a Netlify-ra
-viszed, a DotRoll zónája (és benne az MX) megszűnik, és **a leveleid leállnak**, amíg
-kézzel újra létre nem hozod őket a Netlify DNS-ben.
+| Típus | Név | Érték | Megjegyzés |
+|---|---|---|---|
+| A | `@` | `185.199.108.153` | GitHub Pages |
+| CNAME | `www` | `muellah.github.io.` | a Pages magától átirányít az apexre |
+| Mail Forward | `@` | Alapértelmezett levelezőszerver | **ez adja az MX-et (`5 mx.dotroll.com`), ne töröld** |
+| TXT | `@` | `google-site-verification=...` | Search Console, ne töröld |
+| NS | `@` | `ns1/ns2.dotroll.com` | maradnak |
 
-Marad tehát a DNS a DotRollnál, és csak **két rekord** változik.
+**Hiányzik még (ajánlott, nem kötelező):** a GitHub négy A rekordot javasol a redundancia
+miatt. A másik hármat kézzel kell felvenni a DotRoll DNS-szerkesztőben ("Hozzáad", típus A,
+név `hanyadikhetvan.hu`, TTL 10 perc):
 
-## FONTOS 2: az átállás után is kell a DotRoll-fiók
+- `185.199.109.153`
+- `185.199.110.153`
+- `185.199.111.153`
 
-Ez a terv **csak a webkiszolgálást** viszi át a Netlify-ra. A domain DNS-zónája és a
-levelezés (`mx.dotroll.com`) a DotRollnál marad. Tehát amikor lemondasz valamit, a
-**webtárhely-szolgáltatást** mondod le, nem a fiókot és nem a domaint.
+Egy rekorddal is működik; a `www` már most mind a négy címet megkapja a
+`muellah.github.io`-n keresztül.
 
-Mielőtt bármit lemondanál, kérdezd meg a DotRollt: **adnak-e DNS-kezelést és levelezést
-webtárhely-csomag nélkül?** Ha nem, akkor vagy marad egy minimális csomag, vagy a DNS-t és
-a levelezést is át kell vinni máshová, és az már egy külön, nagyobb lépés (az MX és a
-Google-verifikációs TXT rekordot is újra létre kellene hozni).
+## A DotRoll-fiókot ne mondd fel
 
-## Sorrend (ez a sorrend számít)
+A DNS-zóna és a levelezés ott van. Ha valaha le akarod mondani, előbb kérdezd meg, adnak-e
+DNS-kezelést és levelezést tárhelycsomag nélkül, vagy vidd át mindkettőt máshová (az MX-et
+és a TXT-t is újra létre kell hozni).
 
-### 1. A domain hozzáadása a Netlify oldalán (ELŐSZÖR)
+## Hogyan frissül az oldal
 
-A Netlify csak azokat a hosztneveket szolgálja ki, amiket ismer. Amíg ez nincs meg,
-a DNS-átállítás után a site nem jönne fel, és tanúsítványt sem kapna.
+- `.github/workflows/build.yml`: naponta 23:30 UTC-kor legenerálja a `dist/` mappát és
+  commitolja. Ez tartja aktívnak a repót (a GitHub 60 nap inaktivitás után letiltja az
+  ütemezett workflow-kat).
+- `.github/workflows/pages.yml`: naponta 23:35 UTC-kor újragenerál és kiteszi a GitHub
+  Pages-re. Kézzel is indítható az Actions fülön.
+- A GitHub Actions és a Pages publikus repón ingyenes.
 
-Netlify → [hanyadikhetvan projekt](https://app.netlify.com/projects/hanyadikhetvan)
-→ Domain management → Add a domain:
+## Miért nem a Netlify
 
-- `hanyadikhetvan.hu` (ez legyen az elsődleges)
-- `www.hanyadikhetvan.hu` (aliasként; a Netlify általában magától felajánlja)
+A Netlify ingyenes csomagja **deployonként 15 kreditet** számol, a havi keret 1000. A napi
+build így havi ~450 kreditet vitt volna, a keret 45 százalékát, egy egyoldalas oldalért.
+A forgalom ehhez képest elhanyagolható (60 KB/látogatás, ~37 000 látogatás/hó az Ahrefs
+szerint, kb. 2 GB). A Netlify-projekt megmaradt tartaléknak, az automatikus build ki van
+kapcsolva (`stop_builds: true`), így nem fogyaszt.
 
-A Netlify ekkor "Awaiting External DNS" állapotot mutat. Ez helyes, a DNS még a
-DotRollra mutat.
+## Visszaút a Netlify-ra
 
-### 2. A két rekord a DotRoll DNS-ében
+1. Netlify: `stop_builds` vissza `false`-ra (Project configuration -> Build & deploy), és
+   indíts egy deployt.
+2. DotRoll: az A rekord(ok) helyett egy A `@` -> `75.2.60.5`, a `www` CNAME ->
+   `hanyadikhetvan.netlify.app.`
+3. **GitHub repo Settings -> Pages: töröld a custom domaint.** A GitHub figyelmeztet, hogy
+   letiltott Pages-oldal élő DNS-rekordokkal domain-átvételi kockázat.
 
-| Típus | Név | Érték |
-|---|---|---|
-| A (vagy ALIAS/ANAME, ha a DotRoll tudja) | `@` (a domain maga) | `75.2.60.5` (ALIAS esetén: `apex-loadbalancer.netlify.com`) |
-| CNAME | `www` | `hanyadikhetvan.netlify.app` |
+A DNS-rekordok TTL-je 10 perc, tehát a váltás gyorsan él.
 
-Ha a DotRoll kínál ALIAS vagy ANAME típust, az jobb, mint a fix IP: a Netlify így
-szabadon cserélheti a load balancer címét.
-
-**Amihez ne nyúlj:** MX (`5 mx.dotroll.com`) és a Google verifikációs TXT rekord.
-
-### 3. Várakozás
-
-A terjedés akár egy nap is lehet (Netlify dokumentáció). A HTTPS-tanúsítvány csak
-azután készül el, hogy a DNS már a Netlify-ra mutat, tehát rövid ideig
-tanúsítványhiba látszódhat. Ez normális, nem kell közbeavatkozni.
-
-### 4. Ellenőrzés az átállás után
+## Ellenőrzés
 
 ```bash
-dig +short hanyadikhetvan.hu A            # 75.2.60.5 kell legyen
-dig +short hanyadikhetvan.hu MX           # tovabbra is 5 mx.dotroll.com
-curl -sI https://hanyadikhetvan.hu/ | head -3
+dig +short hanyadikhetvan.hu A        # 185.199.10x.153
+dig +short hanyadikhetvan.hu MX       # 5 mx.dotroll.com.
+curl -sI https://hanyadikhetvan.hu/ | grep -i server    # GitHub.com
 curl -s https://hanyadikhetvan.hu/ | grep -o 'id="hetszam">[0-9]*\.'
-curl -sI http://hanyadikhetvan.hu/ | head -3    # 301 kell https-re
 ```
-
-Az utolsó sor azért kell, mert a régi DotRoll-szerver átirányította a HTTP-t HTTPS-re, a
-Netlify oldalán viszont a "force HTTPS" jelenleg nincs bekapcsolva (tanúsítvány híján még
-nem is lehet). Ha a tanúsítvány elkészülte után ez a parancs nem 301-et ad, kapcsold be:
-Netlify → Domain management → HTTPS → Force HTTPS.
-
-## Visszaút
-
-Ha bármi félremegy, a DotRoll DNS-ben állítsd vissza pontosan ezt a két értéket:
-
-| Típus | Név | Érték |
-|---|---|---|
-| A | `@` | `134.209.91.8` |
-| CNAME | `www` | `hanyadikhetvan.hu` |
-
-A régi PHP-oldal a DotRoll szerverén érintetlenül megvan, tehát a visszaállás azonnal él.
-
----
-
-# Váltás GitHub Pages-re (készenléti terv)
-
-Állapot: a Netlify szolgálja ki az oldalt. Ez a szakasz akkor kell, ha a Netlify
-sávszélesség-limitje problémát jelentene.
-
-## Mikor kell ehhez nyúlni
-
-A Netlify ingyenes csomagjának 100 GB/hó limitje **kemény**: túllépéskor a fiók összes
-projektje szünetel a hónap végéig. A GitHub Pages ugyanezen a 100 GB-on **puha** limitet
-tart ("may not be able to serve your site, or you may receive a polite email").
-
-Mért adatok 2026-09-22-én: egy friss oldalletöltés 60 KB, az Ahrefs becslése ~37 000
-organikus látogatás/hó, ez kb. **2,2 GB/hó, a limit 2 százaléka**. A Netlify emailt küld
-50, 75 és 100 százaléknál. Vagyis ez biztosítás, nem sürgős migráció.
-
-## A váltás négy lépése
-
-1. **Repo Settings -> Pages -> Source: GitHub Actions.** Egyedi Actions-workflow esetén
-   CNAME fájl nem kell, a GitHub dokumentációja szerint egy meglévőt figyelmen kívül hagy.
-2. **Settings -> Pages -> Custom domain: `hanyadikhetvan.hu`**, majd Enforce HTTPS
-   (a tanúsítvány a DNS átállítása után áll elő, akár egy nap).
-3. **Actions -> "GitHub Pages (tartalék)" -> Run workflow.** Ellenőrizd, hogy a
-   `https://muellah.github.io/hanyadikhetvan/` a helyes hétszámot adja.
-   Ezután a `.github/workflows/pages.yml`-ben vedd le a kommentet a `schedule` blokkról,
-   hogy naponta frissüljön.
-4. **DotRoll DNS.** Töröld a jelenlegi egyetlen A rekordot, és vedd fel ezt a négyet
-   (a GitHub mind a négyet kéri), a `www` CNAME-et pedig írd át:
-
-| Típus | Név | Érték |
-|---|---|---|
-| A | `@` | `185.199.108.153` |
-| A | `@` | `185.199.109.153` |
-| A | `@` | `185.199.110.153` |
-| A | `@` | `185.199.111.153` |
-| CNAME | `www` | `muellah.github.io.` |
-
-A `www` célja **repónév nélkül** a felhasználói domain. Az MX ("Mail Forward" sor) és a
-Google-verifikációs TXT most is érintetlen marad.
-
-## Amit a váltással elveszítesz
-
-Egyetlen dolog: az egyedi HTTP-fejlécek. A `netlify.toml` most
-`Cache-Control: max-age=0, must-revalidate`-et ad az index.html-re, a Pages fixen
-`max-age=600`-at. Heti ciklusú adatnál ez a 10 perc érdektelen, tehát gyakorlatilag nincs
-funkcionális veszteség. A `www` -> apex átirányítást a Pages magától megoldja, ha mindkét
-név be van állítva.
-
-## Visszaút Netlify-ra
-
-A fenti négy A rekord helyett vissza az egy `75.2.60.5` rekordra, a `www` CNAME vissza
-`hanyadikhetvan.netlify.app.`-ra. **Fontos: ilyenkor a GitHub repo Settings -> Pages alatt
-töröld a custom domaint.** A GitHub figyelmeztet, hogy egy letiltott Pages-oldal élő
-DNS-rekordokkal domain-átvételi kockázatot jelent.
