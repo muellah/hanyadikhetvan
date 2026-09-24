@@ -60,6 +60,17 @@ A DNS-rekordok TTL-je 10 perc, tehát a váltás gyorsan él.
 
 ## Ellenőrzés
 
+**Automatikus, 3 hétfőn át** (2026-09-28, 10-05, 10-12, mindig 00:01 Budapest):
+`.github/workflows/healthcheck.yml` futtatja a `scripts/healthcheck.mjs`-t (22 ellenőrzés: DNS,
+MX, tanúsítvány, átirányítások, a beégetett hétszám, a látogató által látott hétszám a JS
+lefuttatásával, eszközök, a napi workflow-k frissessége). Hiba esetén a workflow piros lesz
+(a GitHub emailt küld) és issue nyílik a teljes jelentéssel. Az utolsó futás után kikapcsolja
+magát. Kézzel bármikor indítható: Actions -> "Heti élesüzem-ellenőrzés" -> Run workflow.
+
+Helyben: `node scripts/healthcheck.mjs`
+
+Kézi parancsok:
+
 ```bash
 dig +short hanyadikhetvan.hu A        # 185.199.10x.153
 dig +short hanyadikhetvan.hu MX       # 5 mx.dotroll.com.
