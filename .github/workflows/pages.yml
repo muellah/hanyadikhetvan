@@ -14,21 +14,18 @@ on:
   schedule:
     - cron: '35 23 * * *'   # 00:35 / 01:35 budapesti idő, 5 perccel a dist-commit után
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +45,17 @@ jobs:
         with:
           path: dist
 
+  # The artifact must be visible to Pages before the deploy action looks it up.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Közzététel
         id: deployment
         uses: actions/deploy-pages@v4
