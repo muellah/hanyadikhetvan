@@ -116,3 +116,89 @@ body {
 	background-size: 50px;
 	color: #f3612c;
 }
+
+/* Stack the calendar and its labels where the desktop layout no longer fits. */
+@media (max-width: 799px) {
+	body {
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+	#header {
+		box-sizing: border-box;
+		height: auto;
+		min-height: 88px;
+		padding: 16px;
+	}
+	#header h1 {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		width: auto;
+		height: auto;
+		min-height: 56px;
+		font-size: clamp(1.5rem, 6.8vw, 2.5rem);
+		line-height: 1.15;
+	}
+	#header h1 span {
+		flex: 0 0 48px;
+		float: none;
+		margin: 0;
+		width: 48px;
+		height: 48px;
+		/* The original 90px icon starts 130px down the 325px-wide sprite. */
+		background-size: 173.333px auto;
+		background-position: 0 -69.333px;
+	}
+	#content dd .description {
+		display: grid;
+		grid-template: 'prefix' 'calendar' / minmax(0, 1fr);
+		gap: 6px;
+		width: min(325px, calc(100% - 32px));
+		height: auto;
+		margin-bottom: 12px;
+		text-align: center;
+	}
+	#content dd .description .pl,
+	#content dd .description .pr,
+	#content dd .description .px {
+		position: static;
+		font-size: clamp(1.125rem, 5vw, 1.5rem);
+	}
+	#content dd .description .pl { grid-area: prefix; }
+	#content dd .description .pr {
+		grid-area: calendar;
+		z-index: 1;
+		align-self: end;
+		margin-bottom: 17%;
+	}
+	#content dd .description .pc {
+		grid-area: calendar;
+		display: grid;
+		place-items: center;
+		box-sizing: border-box;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 325 / 389;
+		padding: 8% 0 0;
+		font-size: clamp(5rem, 42vw, 10rem);
+		line-height: 1;
+		background-size: 100% auto;
+		background-position: left bottom;
+	}
+	#content dd .description .px {
+		grid-area: calendar;
+		z-index: 1;
+		align-self: end;
+		width: auto;
+		margin-bottom: 3.5%;
+		color: #424141;
+	}
+	#content dd div {
+		width: min(325px, calc(100% - 32px));
+		height: auto;
+	}
+	#content dd .dtstart {
+		float: none;
+	}
+}
